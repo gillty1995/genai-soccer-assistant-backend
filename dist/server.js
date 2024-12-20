@@ -25,6 +25,16 @@ const helmet_1 = __importDefault(require("helmet"));
 dotenv_1.default.config();
 const app = (0, express_1.default)();
 const PORT = process.env.PORT || 5077;
+// subdomains
+const corsOptions = {
+    origin: [
+        'https://futbolrules.hec.to',
+        'https://www.futbolrules.hec.to',
+        'https://api.futbolrules.hec.to'
+    ],
+    methods: 'GET,POST',
+    allowedHeaders: 'Content-Type, Authorization',
+};
 // rate limiting
 const limiter = (0, express_rate_limit_1.default)({
     windowMs: 15 * 60 * 1000,
@@ -33,17 +43,17 @@ const limiter = (0, express_rate_limit_1.default)({
     standardHeaders: true,
     legacyHeaders: false,
 });
-// limiter
+// middlewares
 app.use(limiter);
 app.use((0, helmet_1.default)());
-app.use((0, cors_1.default)());
+app.use((0, cors_1.default)(corsOptions));
 app.use(body_parser_1.default.json());
 // incoming request logger
 app.use((req, res, next) => {
     logger_1.default.info(`${req.method} ${req.url}`);
     next();
 });
-// OpenAI API
+// openai api setup
 const openai = new openai_1.OpenAI({
     apiKey: process.env.OPENAI_API_KEY,
 });
@@ -57,7 +67,7 @@ app.post("/api/ask", (req, res) => __awaiter(void 0, void 0, void 0, function* (
         res.status(400).json({ error: error.details[0].message });
     }
     try {
-        // answer
+        // openai api call
         const response = yield openai.chat.completions.create({
             model: "gpt-4",
             messages: [

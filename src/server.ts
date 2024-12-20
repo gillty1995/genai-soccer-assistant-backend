@@ -12,7 +12,18 @@ import helmet from "helmet";
 dotenv.config();
 
 const app: Application = express();
-const PORT = process.env.PORT || 5077;
+const PORT = Number(process.env.PORT) || 5077;
+
+// subdomains
+const corsOptions = {
+  origin: [
+    'https://futbolrules.hec.to', 
+    'https://www.futbolrules.hec.to',
+    'https://api.futbolrules.hec.to'
+  ],
+  methods: 'GET,POST',
+  allowedHeaders: 'Content-Type, Authorization', 
+};
 
 // rate limiting
 const limiter = rateLimit({
@@ -23,12 +34,10 @@ const limiter = rateLimit({
   legacyHeaders: false,
 });
 
-// limiter
+// middlewares
 app.use(limiter);
-
 app.use(helmet());
-
-app.use(cors());
+app.use(cors(corsOptions)); 
 app.use(bodyParser.json());
 
 // incoming request logger
@@ -37,7 +46,7 @@ app.use((req: Request, res: Response, next) => {
   next();
 });
 
-// OpenAI API
+// openai api setup
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY as string, 
 });
@@ -51,11 +60,11 @@ app.post("/api/ask", async (req: Request, res: Response): Promise<void> => {
 
   if (error) {
     logger.warn(`Validation failed: ${error.details[0].message}`);
-     res.status(400).json({ error: error.details[0].message });
+    res.status(400).json({ error: error.details[0].message });
   }
 
   try {
-    // answer
+    // openai api call
     const response = await openai.chat.completions.create({
       model: "gpt-4",
       messages: [
@@ -79,6 +88,6 @@ app.post("/api/ask", async (req: Request, res: Response): Promise<void> => {
   }
 });
 
-app.listen(PORT, () => {
-  logger.info(`Server running on port ${PORT}`);
-});
+app.listen(PORT, '0.0.0.0', () => {
+    logger.info(`Server running on port ${PORT}`);
+  });
