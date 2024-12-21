@@ -14,15 +14,17 @@ dotenv.config();
 const app: Application = express();
 const PORT = Number(process.env.PORT) || 5077;
 
-// subdomains
+// subdomains and localhost during development
 const corsOptions = {
   origin: [
     'https://futbolrules.hec.to', 
     'https://www.futbolrules.hec.to',
-    'https://api.futbolrules.hec.to'
+    'https://api.futbolrules.hec.to',
+    'http://localhost:5177',  // for development
   ],
   methods: 'GET,POST',
   allowedHeaders: 'Content-Type, Authorization', 
+  credentials: true,  
 };
 
 // rate limiting
@@ -37,7 +39,7 @@ const limiter = rateLimit({
 // middlewares
 app.use(limiter);
 app.use(helmet());
-app.use(cors(corsOptions)); 
+app.use(cors(corsOptions));  
 app.use(bodyParser.json());
 
 // incoming request logger
@@ -89,5 +91,5 @@ app.post("/api/ask", async (req: Request, res: Response): Promise<void> => {
 });
 
 app.listen(PORT, '0.0.0.0', () => {
-    logger.info(`Server running on port ${PORT}`);
-  });
+  logger.info(`Server running on port ${PORT}`);
+});
