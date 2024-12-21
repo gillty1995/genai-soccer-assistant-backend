@@ -44,6 +44,8 @@ app.use(helmet());
 app.use(cors(corsOptions));  
 app.use(bodyParser.json());
 
+app.options('*', cors(corsOptions));  
+
 // incoming request logger
 app.use((req: Request, res: Response, next) => {
   logger.info(`${req.method} ${req.url}`);
