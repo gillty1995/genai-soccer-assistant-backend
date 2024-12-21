@@ -8,13 +8,13 @@ import rateLimit from "express-rate-limit";
 import { questionSchema } from "./validation"; 
 import helmet from "helmet";
 
-// environment variables
+// Environment variables
 dotenv.config();
 
 const app: Application = express();
 const PORT = Number(process.env.PORT) || 5077;
 
-// subdomains and localhost during development
+// CORS configuration 
 const corsOptions = {
   origin: [
     'https://futbolrules.hec.to', 
@@ -29,7 +29,7 @@ const corsOptions = {
   optionsSuccessStatus: 204,  
 };
 
-// rate limiting
+// Rate limiting configuration
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, 
   max: 100,
@@ -38,30 +38,36 @@ const limiter = rateLimit({
   legacyHeaders: false,
 });
 
-// middlewares
-app.use(cors(corsOptions)); 
-app.use(limiter);
+// Middlewares
+app.use(cors(corsOptions));  
+app.use(limiter);  
 app.use(helmet()); 
-app.use(bodyParser.json());
+app.use(bodyParser.json());  
 
-app.options('*', cors(corsOptions));  
+// Handle OPTIONS preflight requests
+app.options('*', (req: Request, res: Response) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.sendStatus(204);
+});
 
-// incoming request logger
+// Incoming request logger
 app.use((req: Request, res: Response, next) => {
   logger.info(`${req.method} ${req.url}`);
   next();
 });
 
-// openai api setup
+// OpenAI API setup
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY as string, 
 });
 
-// questions route
+// Questions route
 app.post("/api/ask", async (req: Request, res: Response): Promise<void> => {
   const { question } = req.body;
 
-  // joi validation
+  // Joi validation
   const { error } = questionSchema.validate({ question });
 
   if (error) {
@@ -70,7 +76,7 @@ app.post("/api/ask", async (req: Request, res: Response): Promise<void> => {
   }
 
   try {
-    // openai api call
+    // OpenAI API call
     const response = await openai.chat.completions.create({
       model: "gpt-4",
       messages: [
@@ -81,7 +87,7 @@ app.post("/api/ask", async (req: Request, res: Response): Promise<void> => {
       ],
     });
 
-    // successful response
+    // Successful response
     logger.info(`Successfully answered the question: ${question}`);
     res.json({ answer: response.choices[0].message.content });
   } catch (error: unknown) {
