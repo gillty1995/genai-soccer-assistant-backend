@@ -39,9 +39,9 @@ const limiter = rateLimit({
 });
 
 // middlewares
+app.use(cors(corsOptions)); 
 app.use(limiter);
-app.use(helmet());
-app.use(cors(corsOptions));  
+app.use(helmet()); 
 app.use(bodyParser.json());
 
 app.options('*', cors(corsOptions));  
