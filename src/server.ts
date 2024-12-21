@@ -22,9 +22,11 @@ const corsOptions = {
     'https://api.futbolrules.hec.to',
     'http://localhost:5177',  // for development
   ],
-  methods: 'GET,POST',
-  allowedHeaders: 'Content-Type, Authorization', 
-  credentials: true,  
+  methods: ['GET', 'POST', 'OPTIONS'],  
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true, 
+  preflightContinue: false, 
+  optionsSuccessStatus: 204,  
 };
 
 // rate limiting
@@ -90,6 +92,7 @@ app.post("/api/ask", async (req: Request, res: Response): Promise<void> => {
   }
 });
 
+// Listen on the specified port
 app.listen(PORT, '0.0.0.0', () => {
   logger.info(`Server running on port ${PORT}`);
 });
