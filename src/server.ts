@@ -42,7 +42,9 @@ const limiter = rateLimit({
 app.use(cors(corsOptions));  
 app.use(limiter);  
 app.use(helmet()); 
-app.use(bodyParser.json());  
+app.use(bodyParser.json());
+
+app.set('trust proxy', 1);
 
 // Handle OPTIONS preflight requests
 app.options('*', (req: Request, res: Response) => {
