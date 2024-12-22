@@ -14,6 +14,9 @@ dotenv.config();
 const app: Application = express();
 const PORT = Number(process.env.PORT) || 5077;
 
+// proxy headers 
+app.set('trust proxy', 1);
+
 // CORS configuration
 const corsOptions = {
   origin: [
@@ -29,18 +32,18 @@ const corsOptions = {
   optionsSuccessStatus: 204,
 };
 
-// Rate limiting configuration
+// limiter
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 100, // limit each IP to 100 requests per windowMs
   message: "Too many requests, please try again later.",
   standardHeaders: true, 
   legacyHeaders: false,  
-  keyGenerator: (req) => req.ip || "unknown",  
+  keyGenerator: (req) => {
+    const forwardedFor = req.headers['x-forwarded-for'] as string;
+    return forwardedFor || req.ip || "unknown";
+  },
 });
-
-// proxy headers 
-app.set('trust proxy', 1);
 
 // Middlewares
 app.use(cors(corsOptions));
