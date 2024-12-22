@@ -100,6 +100,11 @@ app.post("/api/ask", async (req: Request, res: Response): Promise<void> => {
   }
 });
 
+app.get('/', (req: Request, res: Response) => {
+  res.send('Backend server is up and running');
+});
+
+
 // Listen on the specified port
 app.listen(PORT, '0.0.0.0', () => {
   logger.info(`Server running on port ${PORT}`);
