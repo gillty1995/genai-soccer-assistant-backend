@@ -1,11 +1,11 @@
 import express, { Request, Response, Application } from "express";
 import cors from "cors";
 import bodyParser from "body-parser";
-import { OpenAI } from "openai"; 
+import { OpenAI } from "openai";
 import dotenv from "dotenv";
 import logger from "./logger";
-import rateLimit from "express-rate-limit"; 
-import { questionSchema } from "./validation"; 
+import rateLimit from "express-rate-limit";
+import { questionSchema } from "./validation";
 import helmet from "helmet";
 
 // Environment variables
@@ -14,37 +14,39 @@ dotenv.config();
 const app: Application = express();
 const PORT = Number(process.env.PORT) || 5077;
 
-// CORS configuration 
+// CORS configuration
 const corsOptions = {
   origin: [
-    'https://futbolrules.hec.to', 
+    'https://futbolrules.hec.to',
     'https://www.futbolrules.hec.to',
     'https://api.futbolrules.hec.to',
     'http://localhost:5177',  // for development
   ],
-  methods: ['GET', 'POST', 'OPTIONS'],  
+  methods: ['GET', 'POST', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
-  credentials: true, 
-  preflightContinue: false, 
-  optionsSuccessStatus: 204,  
+  credentials: true,
+  preflightContinue: false,
+  optionsSuccessStatus: 204,
 };
 
 // Rate limiting configuration
 const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, 
-  max: 100,
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // limit each IP to 100 requests per windowMs
   message: "Too many requests, please try again later.",
-  standardHeaders: true,
-  legacyHeaders: false,
+  standardHeaders: true, 
+  legacyHeaders: false,  
+  keyGenerator: (req) => req.ip || "unknown",  
 });
 
-// Middlewares
-app.use(cors(corsOptions));  
-app.use(limiter);  
-app.use(helmet()); 
-app.use(bodyParser.json());
-
+// proxy headers 
 app.set('trust proxy', 1);
+
+// Middlewares
+app.use(cors(corsOptions));
+app.use(limiter);
+app.use(helmet());
+app.use(bodyParser.json());
 
 // Handle OPTIONS preflight requests
 app.options('*', (req: Request, res: Response) => {
@@ -56,13 +58,13 @@ app.options('*', (req: Request, res: Response) => {
 
 // Incoming request logger
 app.use((req: Request, res: Response, next) => {
-  logger.info(`${req.method} ${req.url}`);
+  logger.info(`${req.method} ${req.url} - IP: ${req.ip}`);
   next();
 });
 
 // OpenAI API setup
 const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY as string, 
+  apiKey: process.env.OPENAI_API_KEY as string,
 });
 
 // Questions route
@@ -75,6 +77,7 @@ app.post("/api/ask", async (req: Request, res: Response): Promise<void> => {
   if (error) {
     logger.warn(`Validation failed: ${error.details[0].message}`);
     res.status(400).json({ error: error.details[0].message });
+    return;
   }
 
   try {
@@ -102,10 +105,10 @@ app.post("/api/ask", async (req: Request, res: Response): Promise<void> => {
   }
 });
 
+// Root route
 app.get('/', (req: Request, res: Response) => {
   res.send('Backend server is up and running');
 });
-
 
 // Listen on the specified port
 app.listen(PORT, '0.0.0.0', () => {
