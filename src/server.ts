@@ -1,3 +1,4 @@
+import path from "path";
 import express, { Request, Response, Application } from "express";
 import cors from "cors";
 import { OpenAI } from "openai";
@@ -20,7 +21,7 @@ app.set("trust proxy", true);
 app.use(cors(corsOptions));
 app.use(limiter);
 app.use(helmet());
-app.use(express.json({ limit: '20mb' }));  // Using built-in express.json instead of body-parser
+app.use(express.json({ limit: '20mb' }));  
 
 // Handle OPTIONS preflight requests
 app.options("*", (req: Request, res: Response) => {
@@ -36,26 +37,25 @@ app.use((req: Request, res: Response, next) => {
   next();
 });
 
+// Serve React app static files
+const frontendDir = "/var/www/frontend/dist";
+app.use(express.static(frontendDir));
+
+app.get("*", (req: Request, res: Response) => {
+  res.sendFile(path.join(frontendDir, "index.html"));
+});
+
 // OpenAI API setup
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY as string,
 });
 
+// Test route
 app.get("/test", (req: Request, res: Response) => {
   res.json({ message: "Test route is working!" });
 });
 
-// Root route
-app.get("/", (req: Request, res: Response) => {
-  res.json({ message: "Backend server is up and running" });
-});
-
-// Catch-all route for undefined endpoints
-app.use((req: Request, res: Response) => {
-  res.status(404).json({ error: "Route not found" });
-});
-
-// Questions route
+// API route
 app.post("/api/ask", async (req: Request, res: Response): Promise<void> => {
   const { question } = req.body;
 
@@ -69,7 +69,6 @@ app.post("/api/ask", async (req: Request, res: Response): Promise<void> => {
   }
 
   try {
-    // OpenAI API call
     const response = await openai.chat.completions.create({
       model: "gpt-4",
       messages: [
@@ -80,20 +79,14 @@ app.post("/api/ask", async (req: Request, res: Response): Promise<void> => {
       ],
     });
 
-    // Successful response
     logger.info(`Successfully answered the question: ${question}`);
     res.json({ answer: response.choices[0].message.content });
   } catch (error: unknown) {
     logger.error(`Error while processing question: ${error}`);
-    if (error instanceof Error) {
-      res.status(500).json({ error: error.message });
-    } else {
-      res.status(500).json({ error: "An unknown error occurred" });
-    }
+    res.status(500).json({ error: "An unknown error occurred" });
   }
 });
 
-// Listen on the specified port
 app.listen(PORT, "0.0.0.0", () => {
   logger.info(`Server running on port ${PORT}`);
 });
