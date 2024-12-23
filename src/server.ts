@@ -41,6 +41,10 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY as string,
 });
 
+app.get("/test", (req: Request, res: Response) => {
+  res.json({ message: "Test route is working!" });
+});
+
 // Root route
 app.get("/", (req: Request, res: Response) => {
   res.json({ message: "Backend server is up and running" });
