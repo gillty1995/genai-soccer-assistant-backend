@@ -1,6 +1,5 @@
 import express, { Request, Response, Application } from "express";
 import cors from "cors";
-import bodyParser from "body-parser";
 import { OpenAI } from "openai";
 import dotenv from "dotenv";
 import logger from "./logger";
@@ -21,7 +20,7 @@ app.set("trust proxy", true);
 app.use(cors(corsOptions));
 app.use(limiter);
 app.use(helmet());
-app.use(bodyParser.json());
+app.use(express.json({ limit: '20mb' }));  // Using built-in express.json instead of body-parser
 
 // Handle OPTIONS preflight requests
 app.options("*", (req: Request, res: Response) => {
