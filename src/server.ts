@@ -15,7 +15,7 @@ const app: Application = express();
 const PORT = Number(process.env.PORT) || 5077;
 
 // Proxy headers
-app.set("trust proxy", true);
+app.set("trust proxy", 1);
 
 // Middlewares
 app.use(cors(corsOptions));
