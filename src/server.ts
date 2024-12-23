@@ -4,9 +4,9 @@ import bodyParser from "body-parser";
 import { OpenAI } from "openai";
 import dotenv from "dotenv";
 import logger from "./logger";
-import rateLimit from "express-rate-limit";
-import { questionSchema } from "./validation";
 import helmet from "helmet";
+import { corsOptions, limiter } from "./config"; 
+import { questionSchema } from "./validation";
 
 // Environment variables
 dotenv.config();
@@ -14,32 +14,8 @@ dotenv.config();
 const app: Application = express();
 const PORT = Number(process.env.PORT) || 5077;
 
-// proxy headers 
-app.set('trust proxy', 1);
-
-// CORS configuration
-const corsOptions = {
-  origin: [
-    'https://futbolrules.hec.to',
-    'https://www.futbolrules.hec.to',
-    'https://api.futbolrules.hec.to',
-    'http://localhost:5177',  // for development
-  ],
-  methods: ['GET', 'POST', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-  credentials: true,
-  preflightContinue: false,
-  optionsSuccessStatus: 204,
-};
-
-// limiter
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, 
-  max: 100, 
-  message: "Too many requests, please try again later.",
-  standardHeaders: true, 
-  legacyHeaders: false,  
-});
+// Proxy headers
+app.set("trust proxy", 1);
 
 // Middlewares
 app.use(cors(corsOptions));
@@ -48,10 +24,10 @@ app.use(helmet());
 app.use(bodyParser.json());
 
 // Handle OPTIONS preflight requests
-app.options('*', (req: Request, res: Response) => {
-  res.header('Access-Control-Allow-Origin', '*');
-  res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+app.options("*", (req: Request, res: Response) => {
+  res.header("Access-Control-Allow-Origin", "*");
+  res.header("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+  res.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
   res.sendStatus(204);
 });
 
@@ -64,6 +40,16 @@ app.use((req: Request, res: Response, next) => {
 // OpenAI API setup
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY as string,
+});
+
+// Root route
+app.get("/", (req: Request, res: Response) => {
+  res.json({ message: "Backend server is up and running" });
+});
+
+// Catch-all route for undefined endpoints
+app.use((req: Request, res: Response) => {
+  res.status(404).json({ error: "Route not found" });
 });
 
 // Questions route
@@ -104,12 +90,7 @@ app.post("/api/ask", async (req: Request, res: Response): Promise<void> => {
   }
 });
 
-// Root route
-app.get('/', (req: Request, res: Response) => {
-  res.send('Backend server is up and running');
-});
-
 // Listen on the specified port
-app.listen(PORT, '0.0.0.0', () => {
+app.listen(PORT, "0.0.0.0", () => {
   logger.info(`Server running on port ${PORT}`);
 });
