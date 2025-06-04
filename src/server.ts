@@ -25,24 +25,21 @@ app.use(express.json({ limit: '20mb' }));
 
 // Handle OPTIONS preflight requests
 app.options("*", (req: Request, res: Response) => {
-  res.header("Access-Control-Allow-Origin", "*");
+ const allowed = ["https://futbolrules.mine.bz", "https://www.futbolrules.mine.bz"];
+  const origin = req.headers.origin as string;
+  if (allowed.includes(origin)) {
+    res.header("Access-Control-Allow-Origin", origin);
+  }
   res.header("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
   res.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
   res.sendStatus(204);
+  return;
 });
 
 // Incoming request logger
 app.use((req: Request, res: Response, next) => {
   logger.info(`${req.method} ${req.url} - IP: ${req.ip}`);
   next();
-});
-
-// Serve React app static files
-const frontendDir = "/var/www/frontend/dist";
-app.use(express.static(frontendDir));
-
-app.get("*", (req: Request, res: Response) => {
-  res.sendFile(path.join(frontendDir, "index.html"));
 });
 
 // OpenAI API setup
@@ -85,6 +82,15 @@ app.post("/api/ask", async (req: Request, res: Response): Promise<void> => {
     logger.error(`Error while processing question: ${error}`);
     res.status(500).json({ error: "An unknown error occurred" });
   }
+});
+
+// Serve React app static files
+const frontendDir = "/var/www/frontend/dist";
+app.use(express.static(frontendDir))
+
+
+app.get("*", (req: Request, res: Response) => {
+  res.sendFile(path.join(frontendDir, "index.html"));
 });
 
 app.listen(PORT, "0.0.0.0", () => {
