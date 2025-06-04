@@ -2,9 +2,9 @@ import rateLimit from "express-rate-limit";
 
 export const corsOptions = {
   origin: [
-    "https://futbolrules.hec.to",
-    "https://www.futbolrules.hec.to",
-    "https://api.futbolrules.hec.to",
+    "https://futbolrules.mine.bz",
+    "https://www.futbolrules.mine.bz",
+    "https://api.futbolrules.mine.bz",
     "http://localhost:5177", // for development
   ],
   methods: ["GET", "POST", "OPTIONS"],

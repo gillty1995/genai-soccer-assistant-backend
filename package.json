@@ -5,7 +5,8 @@
   "scripts": {
     "build": "tsc",
     "start": "node dist/server.js",
-    "dev": "ts-node-dev --respawn --transpileOnly src/server.ts"
+    "dev": "ts-node-dev --respawn --transpileOnly src/server.ts",
+    "deploy": "npm run build && scp -i ~/Desktop/AWS/awskey.pem -r ./dist ubuntu@52.15.170.81:/home/ubuntu/backend"
   },
   "keywords": [],
   "author": "",
